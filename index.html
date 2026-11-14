@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kairos ご提案 | JPGデザインからHTML・CSSを自動生成する制作支援ツール構築</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #0B0E14;
+    --panel: #121826;
+    --panel-2: #1A2235;
+    --cyan: #5EEAD4;
+    --indigo: #818CF8;
+    --paper: #F4F6F8;
+    --amber: #FACC15;
+    --line: rgba(255,255,255,0.08);
+  }
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  html{ scroll-behavior: smooth; }
+  body{
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+  h1,h2,h3{
+    font-family: 'Space Grotesk', 'Noto Sans JP', sans-serif;
+    letter-spacing: 0.01em;
+  }
+  .mono{
+    font-family: 'JetBrains Mono', monospace;
+  }
+  a{ color: inherit; text-decoration: none; }
+  img{ max-width: 100%; display:block; }
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  section{ position: relative; padding: 100px 0; }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 140px 0 100px;
+    background:
+      linear-gradient(180deg, rgba(11,14,20,0.2), rgba(11,14,20,0.95) 85%),
+      repeating-linear-gradient(0deg, var(--line) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 48px),
+      var(--ink);
+    overflow: hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute;
+    left:0; right:0; top:-20%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow: 0 0 24px 4px rgba(94,234,212,0.6);
+    animation: scan 5s linear infinite;
+    opacity: 0.8;
+  }
+  @keyframes scan{
+    0%{ top:-5%; }
+    100%{ top: 105%; }
+  }
+  .hero-grid{
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 48px;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  .badge{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--cyan);
+    border: 1px solid rgba(94,234,212,0.4);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 28px;
+    background: rgba(94,234,212,0.06);
+  }
+  .badge::before{
+    content:"";
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px 2px var(--cyan);
+  }
+  .hero h1{
+    font-size: clamp(32px, 4.6vw, 54px);
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--paper);
+    margin-bottom: 22px;
+  }
+  .hero h1 em{
+    font-style: normal;
+    background: linear-gradient(90deg, var(--cyan), var(--indigo));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p.lead{
+    font-size: 16px;
+    color: #C7CEDB;
+    max-width: 52ch;
+    margin-bottom: 34px;
+  }
+  .hero-ctas{
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .btn{
+    display: inline-block;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .btn-primary{
+    background: linear-gradient(90deg, var(--cyan), var(--indigo));
+    color: #0B0E14;
+  }
+  .btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 10px 30px rgba(94,234,212,0.25); }
+  .btn-ghost{
+    border: 1px solid rgba(255,255,255,0.25);
+    color: var(--paper);
+  }
+  .btn-ghost:hover{ background: rgba(255,255,255,0.06); }
+
+  /* hero visual: JPG -> CODE */
+  .conv{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+  .conv-box{
+    width: 100%;
+    max-width: 180px;
+    aspect-ratio: 4/5;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .conv-jpg{
+    background:
+      linear-gradient(135deg, rgba(129,140,248,0.5), rgba(94,234,212,0.5)),
+      linear-gradient(0deg, rgba(0,0,0,0.25), rgba(0,0,0,0.25)),
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.08) 0 8px, transparent 8px 16px);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .conv-jpg::before{
+    content:"IMG_0427.jpg";
+    position: absolute;
+    bottom: 10px; left: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 3px 7px;
+    border-radius: 4px;
+  }
+  .conv-jpg .ph{
+    position: absolute;
+    top: 14%; left: 14%; right: 14%;
+    height: 30%;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.25);
+  }
+  .conv-jpg .ln{
+    position: absolute;
+    left: 14%; right: 30%;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.5);
+  }
+  .conv-jpg .ln1{ top: 50%; }
+  .conv-jpg .ln2{ top: 60%; right: 45%; }
+  .conv-arrow{
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--amber);
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .conv-code{
+    background: var(--panel);
+    border: 1px solid rgba(94,234,212,0.3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    padding: 14px 10px;
+    color: #9FB3C8;
+    line-height: 1.7;
+  }
+  .conv-code .tag{ color: var(--cyan); }
+  .conv-code .attr{ color: var(--indigo); }
+  .conv-code .str{ color: var(--amber); }
+
+  /* ---------- SECTION HEAD ---------- */
+  .eyebrow{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--indigo);
+    margin-bottom: 14px;
+    display: block;
+  }
+  .sec-title{
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .sec-lead{
+    color: #B9C2D0;
+    max-width: 64ch;
+    margin-bottom: 48px;
+  }
+
+  /* ---------- UNDERSTANDING ---------- */
+  .understand{
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .quote-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .quote-card{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 26px;
+    position: relative;
+  }
+  .quote-card::before{
+    content: "“";
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 46px;
+    color: rgba(94,234,212,0.35);
+    position: absolute;
+    top: 6px; left: 14px;
+    line-height: 1;
+  }
+  .quote-card p{
+    font-size: 14.5px;
+    color: #D6DCE6;
+    padding-left: 8px;
+  }
+  .quote-card .tag{
+    display: inline-block;
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+  }
+
+  /* ---------- VALUE CARDS ---------- */
+  .value-grid{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .value-card{
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 30px 26px;
+    position: relative;
+    overflow: hidden;
+  }
+  .value-card::after{
+    content:"";
+    position: absolute;
+    right: -30px; top: -30px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(94,234,212,0.18), transparent 70%);
+  }
+  .value-num{
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--amber);
+    font-size: 13px;
+    margin-bottom: 14px;
+    letter-spacing: 0.1em;
+  }
+  .value-icon{
+    width: 40px; height: 40px;
+    margin-bottom: 18px;
+    position: relative;
+  }
+  .icon-ocr{ border: 2px solid var(--cyan); border-radius: 8px; }
+  .icon-ocr::before, .icon-ocr::after{
+    content:""; position:absolute; left: 8px; right: 8px; height: 2px; background: var(--cyan);
+  }
+  .icon-ocr::before{ top: 12px; }
+  .icon-ocr::after{ top: 22px; width: 60%; }
+  .icon-cut{
+    border: 2px dashed var(--indigo); border-radius: 50%;
+  }
+  .icon-code{
+    background: linear-gradient(135deg, var(--cyan), var(--indigo));
+    clip-path: polygon(20% 0, 80% 0, 100% 50%, 80% 100%, 20% 100%, 0 50%);
+  }
+  .icon-check{
+    border: 2px solid var(--amber);
+  }
+  .icon-check::before{
+    content:""; position:absolute; left: 9px; top: 18px; width: 8px; height: 14px;
+    border-right: 2px solid var(--amber); border-bottom: 2px solid var(--amber);
+    transform: rotate(45deg);
+  }
+  .icon-shield{
+    background: linear-gradient(180deg, var(--indigo), transparent);
+    clip-path: polygon(50% 0, 100% 20%, 100% 60%, 50% 100%, 0 60%, 0 20%);
+    opacity: 0.85;
+  }
+  .value-card h3{
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: var(--paper);
+  }
+  .value-card p{
+    font-size: 14px;
+    color: #B9C2D0;
+  }
+
+  /* ---------- PROCESS ---------- */
+  .process{
+    background:
+      radial-gradient(1200px 400px at 80% -10%, rgba(129,140,248,0.12), transparent 60%),
+      var(--ink);
+  }
+  .timeline{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    position: relative;
+  }
+  .phase{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 24px;
+    position: relative;
+  }
+  .phase-top{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+  }
+  .phase-label{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+  }
+  .phase-dur{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--amber);
+    background: rgba(250,204,21,0.1);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .phase h3{
+    font-size: 19px;
+    margin-bottom: 10px;
+  }
+  .phase ul{
+    list-style: none;
+    font-size: 13.5px;
+    color: #B9C2D0;
+  }
+  .phase ul li{
+    padding-left: 18px;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .phase ul li::before{
+    content:"▹";
+    position: absolute;
+    left: 0;
+    color: var(--indigo);
+  }
+
+  /* ---------- VERIFY DETAIL ---------- */
+  .verify{
+    background: var(--panel);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .verify-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .verify-list{
+    list-style: none;
+  }
+  .verify-list li{
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    color: #D6DCE6;
+  }
+  .verify-list li .n{
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--cyan);
+    flex-shrink: 0;
+  }
+  .terminal{
+    background: #090C11;
+    border: 1px solid rgba(94,234,212,0.25);
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+  }
+  .terminal-bar{
+    background: var(--panel-2);
+    padding: 10px 14px;
+    display: flex;
+    gap: 6px;
+  }
+  .terminal-bar span{
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block;
+    background: #555;
+  }
+  .terminal-bar span:nth-child(1){ background: #FF5F56; }
+  .terminal-bar span:nth-child(2){ background: #FFBD2E; }
+  .terminal-bar span:nth-child(3){ background: #27C93F; }
+  .terminal-body{
+    padding: 18px 18px 22px;
+    color: #9FB3C8;
+    line-height: 1.9;
+  }
+  .terminal-body .c1{ color: var(--cyan); }
+  .terminal-body .c2{ color: var(--amber); }
+  .terminal-body .c3{ color: var(--indigo); }
+
+  /* ---------- CLOSING ---------- */
+  .closing{
+    text-align: center;
+    padding: 120px 0 140px;
+    background:
+      repeating-linear-gradient(0deg, var(--line) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px 48px),
+      linear-gradient(180deg, var(--ink), #060709);
+  }
+  .closing h2{
+    font-size: clamp(26px, 4vw, 40px);
+    margin-bottom: 20px;
+  }
+  .closing p{
+    color: #B9C2D0;
+    max-width: 56ch;
+    margin: 0 auto 36px;
+  }
+  .closing-ctas{
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .meta-row{
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #7E8AA0;
+  }
+  footer{
+    text-align: center;
+    padding: 28px 0;
+    font-size: 12px;
+    color: #5C6578;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (max-width: 860px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .hero{ padding-top: 120px; }
+    .quote-grid{ grid-template-columns: 1fr; }
+    .value-grid{ grid-template-columns: 1fr 1fr; }
+    .timeline{ grid-template-columns: 1fr; }
+    .verify-grid{ grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px){
+    section{ padding: 70px 0; }
+    .value-grid{ grid-template-columns: 1fr; }
+    .conv{ transform: scale(0.9); }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="badge">KAIROS PROPOSAL / 画像解析×コード生成</span>
+      <h1>その1枚のJPGに、<br><em>完成形</em>はすでに描かれている。</h1>
+      <p class="lead">
+        ハウスドクター様のLP・地域ページ制作フローに向けて、デザイン画像から原稿・素材・レイアウトを読み取り、
+        編集可能なHTML・CSSへ変換する制作支援ツールを、Kairosがご提案いたします。
+      </p>
+      <div class="hero-ctas">
+        <a href="#closing" class="btn btn-primary">提案内容を相談する</a>
+        <a href="#process" class="btn btn-ghost">検証の進め方を見る</a>
+      </div>
+    </div>
+    <div>
+      <div class="conv">
+        <div class="conv-box conv-jpg">
+          <div class="ph"></div>
+          <div class="ln ln1"></div>
+          <div class="ln ln2"></div>
+        </div>
+        <div class="conv-arrow mono">→</div>
+        <div class="conv-box conv-code">
+          <div><span class="tag">&lt;section</span> <span class="attr">class</span>=<span class="str">"hero"</span><span class="tag">&gt;</span></div>
+          <div>&nbsp;&nbsp;<span class="tag">&lt;h1&gt;</span>見出しテキスト<span class="tag">&lt;/h1&gt;</span></div>
+          <div>&nbsp;&nbsp;<span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="str">"person.png"</span><span class="tag">/&gt;</span></div>
+          <div>&nbsp;&nbsp;<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="str">"tel:#"</span><span class="tag">&gt;</span>電話<span class="tag">&lt;/a&gt;</span></div>
+          <div><span class="tag">&lt;/section&gt;</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="understand">
+  <div class="wrap">
+    <span class="eyebrow">01 / 課題の理解</span>
+    <h2 class="sec-title">「毎回ゼロから組む」制作フローを、<br>検証可能な仕組みに変えたい。</h2>
+    <p class="sec-lead">
+      ご依頼内容を拝見し、単なる「AIでコードを書く」ツールではなく、
+      再現度・修正時間・費用のバランスを検証したうえで現場に導入する、
+      地に足のついた仕組みづくりを求めていらっしゃると理解しました。
+    </p>
+    <div class="quote-grid">
+      <div class="quote-card">
+        <p>LP・地域別ページを量産する中で、デザインJPGからのコーディングが毎回工数のボトルネックになっている。</p>
+        <span class="tag mono">→ OCR・素材抽出・コード生成の自動化ラインを構築</span>
+      </div>
+      <div class="quote-card">
+        <p>人物と背景が重なる部分や、文字に隠れた素材など、単純な切り出しでは再現できない領域がある。</p>
+        <span class="tag mono">→ 背景補完・代替素材生成＋人の確認フローを明示</span>
+      </div>
+      <div class="quote-card">
+        <p>ChatGPT系・Claude系のどちらが実務に適しているか、再現度・時間・費用で比較判断したい。</p>
+        <span class="tag mono">→ 同一画像・同一条件でのA/B検証レポートを提出</span>
+      </div>
+      <div class="quote-card">
+        <p>WordPressに組み込みやすく、地域名や文章を差し替えても崩れない、保守しやすいコードが欲しい。</p>
+        <span class="tag mono">→ セクション独立CSS設計＋可変テキスト前提の実装</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <span class="eyebrow">02 / Kairosが提供できる価値</span>
+    <h2 class="sec-title">「検証して選ぶ」ための、5つの実装アプローチ</h2>
+    <p class="sec-lead">
+      再現度・修正時間・費用を数値で比較できる形に落とし込み、本開発の判断材料をそろえます。
+    </p>
+    <div class="value-grid">
+      <div class="value-card">
+        <div class="value-num">01</div>
+        <div class="value-icon icon-ocr"></div>
+        <h3>原稿の読み取り・編集可能化</h3>
+        <p>画像内の見出し・本文・料金等をOCR＋AIで構造化し、誤読箇所を確認・修正できる形でテキスト化します。</p>
+      </div>
+      <div class="value-card">
+        <div class="value-num">02</div>
+        <div class="value-icon icon-cut"></div>
+        <h3>人物・背景の素材切り出し</h3>
+        <p>セグメンテーションで人物・背景・アイコンを分離。重なり・隠れ部分は背景補完や代替生成で対応範囲を明確化します。</p>
+      </div>
+      <div class="value-card">
+        <div class="value-num">03</div>
+        <div class="value-icon icon-code"></div>
+        <h3>HTML・CSSの自動生成</h3>
+        <p>色・余白・文字サイズを解析し、他セクションに影響しにくい設計でコードを生成。WordPress組み込みも想定した構成にします。</p>
+      </div>
+      <div class="value-card">
+        <div class="value-num">04</div>
+        <div class="value-icon icon-check"></div>
+        <h3>Playwrightによる自動比較</h3>
+        <p>生成ページのスクリーンショットを元画像と比較し、文字欠け・崩れ・はみ出し・ボタン動作を自動検知します。</p>
+      </div>
+      <div class="value-card">
+        <div class="value-num">05</div>
+        <div class="value-icon icon-shield"></div>
+        <h3>API管理とコスト可視化</h3>
+        <p>APIキーをサーバー側に隠蔽し、1件あたりの利用料・累計利用量を可視化。使いすぎを防ぐ上限設定も組み込みます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="process" id="process">
+  <div class="wrap">
+    <span class="eyebrow">03 / 進め方・スケジュールイメージ</span>
+    <h2 class="sec-title">まずは小規模検証で、方式を見極める</h2>
+    <p class="sec-lead">
+      いきなり本開発に進まず、ご提供いただくヒーローセクション画像数枚での検証から着手します。
+    </p>
+    <div class="timeline">
+      <div class="phase">
+        <div class="phase-top">
+          <span class="phase-label mono">PHASE 01</span>
+          <span class="phase-dur mono">約1〜2週間</span>
+        </div>
+        <h3>検証・方式比較</h3>
+        <ul>
+          <li>オンライン打ち合わせで要件・運用を確認</li>
+          <li>ChatGPT系／Claude系＋画像処理APIを比較</li>
+          <li>原稿読み取り精度・素材切り出し範囲を検証</li>
+          <li>所要時間・API費用・課題を報告書にまとめる</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-top">
+          <span class="phase-label mono">PHASE 02</span>
+          <span class="phase-dur mono">検証結果を踏まえ見積もり</span>
+        </div>
+        <h3>本開発</h3>
+        <ul>
+          <li>アップロード〜生成〜修正〜出力までのツール実装</li>
+          <li>PC／スマホ推定レイアウトの確認・修正UI</li>
+          <li>Playwright連携の表示検証フロー組み込み</li>
+          <li>WordPress組み込みを想定した出力構成に整備</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-top">
+          <span class="phase-label mono">PHASE 03</span>
+          <span class="phase-dur mono">継続運用</span>
+        </div>
+        <h3>納品・保守</h3>
+        <ul>
+          <li>ソースコード・操作手順・環境構築資料を納品</li>
+          <li>API利用料・維持費の試算と使いすぎ防止設定</li>
+          <li>納品後の修正・保守対応窓口を継続</li>
+          <li>運用データを踏まえた精度改善の提案</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="verify">
+  <div class="wrap">
+    <span class="eyebrow">04 / 最初の検証で確認すること</span>
+    <h2 class="sec-title">8つの観点で、数値とともにご報告します</h2>
+    <div class="verify-grid">
+      <ul class="verify-list">
+        <li><span class="n mono">01</span>原稿の読み取り精度（誤読率・修正量）</li>
+        <li><span class="n mono">02</span>人物写真・背景の切り出し／再利用可能範囲</li>
+        <li><span class="n mono">03</span>画像補完・代替生成が必要な箇所の特定</li>
+        <li><span class="n mono">04</span>デザイン再現度（レイアウト・配色・余白）</li>
+        <li><span class="n mono">05</span>初稿生成〜人による確認完了までの所要時間</li>
+        <li><span class="n mono">06</span>1件あたりのAPI利用料（画像処理・生成含む）</li>
+        <li><span class="n mono">07</span>手作業との比較で短縮できた／できなかった工程</li>
+        <li><span class="n mono">08</span>自動化が難しく人の判断が必要な部分</li>
+      </ul>
+      <div class="terminal">
+        <div class="terminal-bar"><span></span><span></span><span></span></div>
+        <div class="terminal-body">
+          <div>$ run verify --input hero_01.jpg</div>
+          <div><span class="c1">✓</span> OCR抽出完了　誤読 <span class="c2">1</span>箇所／48文字</div>
+          <div><span class="c1">✓</span> 人物・背景 分離　再利用率 <span class="c2">82%</span></div>
+          <div><span class="c3">!</span> 文字と重なる背景　<span class="c2">要・人による確認</span></div>
+          <div><span class="c1">✓</span> HTML/CSS生成　再現度 <span class="c2">91%</span></div>
+          <div><span class="c1">✓</span> Playwright比較　スマホはみ出し <span class="c2">0件</span></div>
+          <div>$ cost --per-image</div>
+          <div>&nbsp;&nbsp;chatgpt系: <span class="c2">¥XX</span>　claude系: <span class="c2">¥XX</span></div>
+          <div class="c1">done. report.pdf を出力しました</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="closing" id="closing">
+  <div class="wrap">
+    <span class="eyebrow">05 / 次のアクション</span>
+    <h2>まずはオンラインで、<br>検証の進め方をすり合わせましょう</h2>
+    <p>
+      実現したい内容・これまでの開発実績・推奨する技術構成をお伝えしたうえで、
+      小規模検証の費用と納期、本開発の概算をご提示します。
+      契約前の打ち合わせ日程は複数候補をご用意可能です。
+    </p>
+    <div class="closing-ctas">
+      <a href="#" class="btn btn-primary">オンライン打ち合わせを申し込む</a>
+      <a href="#" class="btn btn-ghost">提案書・見積もりを依頼する</a>
+    </div>
+    <div class="meta-row">
+      <span>PROPOSAL BY Kairos</span>
+      <span>CATEGORY 370 / AI・API開発</span>
+      <span>対応: 検証 → 本開発 → 保守運用</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    © Kairos — Web制作・システム開発チーム / 本提案はハウスドクター様向けに作成しています。
+  </div>
+</footer>
+
+</body>
+</html>
